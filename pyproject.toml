@@ -8,6 +8,7 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.7"
 django = "^3.0.4"
+Pillow = "^7.0.0"
 
 [tool.poetry.dev-dependencies]
 dephell = "^0.8.2"
