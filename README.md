@@ -3,17 +3,23 @@ factory-boy-demystified
 
 Code example for the article [TBC].
 
-Using Python 3.7 and pipenv.
+Using Python 3.7 and poetry.
 
 Install dependencies using:
 
 ```shell script
-pipenv install
+poetry install
+```
+
+Or:
+
+```shell script
+pip install -r requirements.txt
 ```
 
 Test using:
 
 ```shell script
-pipenv install --dev
+poetry install
 pytest
 ```
