@@ -16,10 +16,3 @@ Or:
 ```shell script
 pip install -r requirements.txt
 ```
-
-Test using:
-
-```shell script
-poetry install
-pytest
-```
