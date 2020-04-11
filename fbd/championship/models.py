@@ -20,12 +20,12 @@ class Club(models.Model):
 
 
 class Player(models.Model):
-    club = models.ForeignKey(Club, models.PROTECT)
+    club = models.ForeignKey(Club, models.PROTECT, related_name='players')
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     dob = models.DateTimeField()
     sex = models.CharField(max_length=100, choices=SEX_CHOICES)
-    government_id = models.CharField(max_length=20, unique=True)
+    government_id = models.IntegerField(unique=True)
     picture = models.ImageField(null=True, blank=True)
 
     def __str__(self):

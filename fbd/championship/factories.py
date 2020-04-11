@@ -1,10 +1,9 @@
-from random import randrange
-
-from factory import DjangoModelFactory, Faker, post_generation, lazy_attribute
+from django.db.models import Max
+from factory import DjangoModelFactory, Faker, post_generation, lazy_attribute_sequence
 from factory.fuzzy import FuzzyChoice
 from pytz import UTC
 
-from fbd.championship.models import Club, SEX_CHOICES, Player, Tournament
+from fbd.championship.models import Club, SEX_CHOICES, Player, Tournament, SEX_MALE
 
 
 class ClubFactory(DjangoModelFactory):
@@ -13,6 +12,16 @@ class ClubFactory(DjangoModelFactory):
     class Meta:
         model = Club
 
+    @post_generation
+    def players(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if extracted:
+            for player in extracted:
+                player.club = self
+                player.save()
+
 
 class PlayerFactory(DjangoModelFactory):
     first_name = Faker('first_name')
@@ -20,17 +29,27 @@ class PlayerFactory(DjangoModelFactory):
     dob = Faker('date_time_between', start_date='-40y', end_date='-15y', tzinfo=UTC)
     sex = FuzzyChoice(SEX_CHOICES, getter=lambda c: c[0])
 
+    @lazy_attribute_sequence
+    def government_id(self, n):
+        dob_part = int(self.dob.strftime('%y%m%d')) * 10000
+
+        # lets start at
+        # last known government_id for a date + 1 if last known government_id for a date is odd
+        # last known government_id for a date + 2 if last known government_id for a date is even
+        seq_start = Player.objects.filter(
+            government_id__gte=dob_part,
+            government_id__lte=dob_part + 10000
+        ).aggregate(seq_start=Max('government_id'))['seq_start'] or dob_part
+        seq_start += 2 - (seq_start % 2)
+
+        # for male, we need an odd (2n + 1) number, for any other sex - even (2n)
+        # n = [0, 1, ..., n]
+        government_id = seq_start + 2 * n + (self.sex == SEX_MALE)
+
+        return government_id
+
     class Meta:
         model = Player
-
-    @lazy_attribute
-    def government_id(self):
-        # @TODO: improve me
-        birth_year = str(self.dob.year)[2:]
-        birth_month = str(self.dob.month).zfill(2)
-        birth_day = str(self.dob.day).zfill(2)
-        counter = str(randrange(1, 10000)).zfill(4)
-        return f'{birth_year}{birth_month}{birth_day}{counter}'
 
     @post_generation
     def tournaments(self, create, extracted, **kwargs):
