@@ -1,3 +1,7 @@
+import os
+
+from django.conf import settings
+from django.core.files import File
 from django.db.models import Max
 from factory import DjangoModelFactory, Faker, post_generation, lazy_attribute_sequence
 from factory.fuzzy import FuzzyChoice
@@ -59,6 +63,18 @@ class PlayerFactory(DjangoModelFactory):
         if extracted:
             for tournament in extracted:
                 self.tournaments.add(tournament)
+
+    @post_generation
+    def picture(self, create, extracted, **kwargs):
+        if extracted:
+            self.picture = extracted
+        if kwargs:
+            assert 'filename' in kwargs, 'You need to pass in the filename'
+            location = os.path.join(settings.BASE_DIR, f'fbd/championship/fixtures/{kwargs["filename"]}')
+            assert os.path.isfile(location), f'{location} does not exist'
+            self.picture = File(open(location, 'rb'))
+        if create:
+            self.save(update_fields=['picture'])
 
 
 class TournamentFactory(DjangoModelFactory):
